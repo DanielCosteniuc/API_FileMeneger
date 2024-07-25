@@ -1,0 +1,208 @@
+file_manager_api/templates/index.html<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Manager</title>
+    <style>
+        /* CSS pentru stilizare */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            font-size: 24px;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin-bottom: 10px;
+        }
+        button {
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Titlul principal al paginii -->
+    <h1>File Manager</h1>
+
+    <!-- Formular pentru încărcarea fișierelor -->
+    <form id="uploadForm">
+        <!-- Câmp de fișier pentru selectarea unui fișier de pe dispozitiv -->
+        <input type="file" id="fileInput" name="file">
+        <!-- Buton pentru trimiterea formularului -->
+        <button type="submit">Upload</button>
+    </form>
+
+    <!-- Subtitlul pentru lista de fișiere -->
+    <h2>Files</h2>
+
+    <!-- Lista neordonată unde vor fi afișate fișierele -->
+    <ul id="fileList"></ul>
+
+    <!-- Script JavaScript pentru funcționalitate -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+
+
+            function loadFiles() {
+                fetch('/list', {
+                    headers: {
+                        'Authorization': 'Basic ' + btoa(username + ':' + password) // Adaugă antetul de autentificare
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    fileList.innerHTML = ''; // Golește lista de fișiere existentă
+                    data.files.forEach(file => {
+                        const li = document.createElement('li'); // Creează un element de listă
+                        li.textContent = file; // Setează numele fișierului
+        
+                        // Creează un link pentru descărcarea fișierului
+                        const downloadLink = document.createElement('a');
+                        downloadLink.href = `/download/${file}`;
+                        downloadLink.textContent = ' [Download]';
+                        downloadLink.style.marginLeft = '10px';
+        
+                        // Adaugă un eveniment de clic pentru a forța descărcarea fișierului
+                        downloadLink.addEventListener('click', function(event) {
+                            event.preventDefault();
+                            fetch(downloadLink.href, {
+                                headers: {
+                                    'Authorization': 'Basic ' + btoa(username + ':' + password) // Adaugă antetul de autentificare
+                                }
+                            })
+                            .then(response => response.blob())
+                            .then(blob => {
+                                const url = window.URL.createObjectURL(blob);
+                                const a = document.createElement('a');
+                                a.style.display = 'none';
+                                a.href = url;
+                                a.download = file;
+                                document.body.appendChild(a);
+                                a.click();
+                                window.URL.revokeObjectURL(url);
+                            })
+                            .catch(error => console.error('Error:', error));
+                        });
+        
+                        // Creează un buton pentru ștergerea fișierului
+                        const deleteButton = document.createElement('button');
+                        deleteButton.textContent = 'Delete';
+                        deleteButton.style.marginLeft = '10px';
+                        deleteButton.addEventListener('click', () => deleteFile(file));
+        
+                        // Adaugă linkul de descărcare și butonul de ștergere la elementul de listă
+                        li.appendChild(downloadLink);
+                        li.appendChild(deleteButton);
+                        // Adaugă elementul de listă la lista neordonată
+                        fileList.appendChild(li);
+                    });
+                })
+                .catch(error => console.error('Error:', error));
+            }
+
+
+            // Obține referințele la elementele HTML
+            const uploadForm = document.getElementById('uploadForm');
+            const fileInput = document.getElementById('fileInput');
+            const fileList = document.getElementById('fileList');
+
+            const username = 'admin'; // Numele de utilizator pentru autentificare
+            const password = 'password123'; // Parola pentru autentificare
+
+            // Adaugă un ascultător de evenimente pentru trimiterea formularului
+            uploadForm.addEventListener('submit', function(e) {
+                e.preventDefault(); // Previne trimiterea implicită a formularului
+                const formData = new FormData(); // Creează un obiect FormData
+                formData.append('file', fileInput.files[0]); // Adaugă fișierul selectat la FormData
+
+                // Trimite fișierul la server printr-o cerere POST
+                fetch('/upload', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'Authorization': 'Basic ' + btoa(username + ':' + password) // Adaugă antetul de autentificare
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error); // Afișează eroarea dacă există
+                    } else {
+                        alert(data.message); // Afișează mesajul de succes
+                        loadFiles(); // Reîncarcă lista de fișiere
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            });
+
+            // Funcție pentru încărcarea listei de fișiere de pe server
+            function loadFiles() {
+                fetch('/list', {
+                    headers: {
+                        'Authorization': 'Basic ' + btoa(username + ':' + password) // Adaugă antetul de autentificare
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    fileList.innerHTML = ''; // Golește lista de fișiere existentă
+                    data.files.forEach(file => {
+                        const li = document.createElement('li'); // Creează un element de listă
+                        li.textContent = file; // Setează numele fișierului
+
+                        // Creează un link pentru descărcarea fișierului
+                        const downloadLink = document.createElement('a');
+                        downloadLink.href = `/download/${file}`;
+                        downloadLink.textContent = ' [Download]';
+                        downloadLink.style.marginLeft = '10px';
+
+                        // Creează un buton pentru ștergerea fișierului
+                        const deleteButton = document.createElement('button');
+                        deleteButton.textContent = 'Delete';
+                        deleteButton.style.marginLeft = '10px';
+                        deleteButton.addEventListener('click', () => deleteFile(file));
+
+                        // Adaugă linkul de descărcare și butonul de ștergere la elementul de listă
+                        li.appendChild(downloadLink);
+                        li.appendChild(deleteButton);
+                        // Adaugă elementul de listă la lista neordonată
+                        fileList.appendChild(li);
+                    });
+                })
+                .catch(error => console.error('Error:', error));
+            }
+
+            // Funcție pentru ștergerea fișierelor de pe server
+            function deleteFile(filename) {
+                fetch(`/delete/${filename}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': 'Basic ' + btoa(username + ':' + password) // Adaugă antetul de autentificare
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error); // Afișează eroarea dacă există
+                    } else {
+                        alert(data.message); // Afișează mesajul de succes
+                        loadFiles(); // Reîncarcă lista de fișiere
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+            }
+
+            // Încarcă lista de fișiere la inițializarea paginii
+            loadFiles();
+        });
+    </script>
+</body>
+</html>

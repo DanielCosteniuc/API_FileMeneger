@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <script src="https://sdk.descope.com/"></script>
+</head>
+<body>
+    <div id="auth-container"></div>
+    <script>
+        const descope = new Descope({
+            projectId: 'P2jdtBKBy2lzJIFFo9L02MQjG88A',
+        });
+        descope.initAuthFlow({
+            containerSelector: '#auth-container',
+            onSuccess: (e) => {
+                document.cookie = `session_token=${e.detail.session.token}; path=/`;
+                window.location.href = '/';
+            },
+            onError: (e) => console.error('Login failed', e),
+        });
+    </script>
+</body>
+</html>
