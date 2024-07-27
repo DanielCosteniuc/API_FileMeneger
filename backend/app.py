@@ -91,6 +91,14 @@ def server_action():
         return jsonify({'success': False, 'message': 'Fișierul nu a fost găsit.'}), 404
 
 
-#xvxdfgithub
+#deschiderea Microsoft Teams
+@app.route('/open-teams', methods=['POST'])
+def open_teams():
+    try:
+        subprocess.run(['start', 'teams'], shell=True)
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
